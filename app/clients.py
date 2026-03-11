@@ -19,7 +19,7 @@ class CatalogClient:
             response = await self._client.get(f"/api/catalog/items/{item_id}")
         except httpx.RequestError as exc:
             raise CatalogServiceUnavailableError(
-                "Не удалось получить предмет из сервиса Catalogd"
+                "Не удалось получить предмет из сервиса Catalog"
             ) from exc
 
         if response.status_code == 404:
