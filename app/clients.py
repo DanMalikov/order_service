@@ -5,6 +5,10 @@ from app.config import settings
 from app.exceptions import CatalogServiceUnavailableError, ItemNotFoundError
 from app.schemas import CatalogItemResponse
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class CatalogClient:
     def __init__(self) -> None:
@@ -15,9 +19,30 @@ class CatalogClient:
         )
 
     async def get_item(self, item_id: UUID) -> CatalogItemResponse:
+        url = f"/api/catalog/items/{item_id}"
+        logger.info("Запрашиваемый предмет", extra={"item_id": str(item_id), "url": url})
         try:
-            response = await self._client.get(f"/api/catalog/items/{item_id}")
+            response = await self._client.get(url)
+
+            logger.info(
+                "Запрос предмета из Catalog",
+                extra={
+                    "item_id": str(item_id),
+                    "status_code": response.status_code,
+                    "response_text": response.text,
+                },
+            )
+
         except httpx.RequestError as exc:
+
+            logger.exception(
+                "Запрос из Catalog сломался",
+                extra={
+                    "item_id": str(item_id),
+                    "url": url,
+                },
+            )
+
             raise CatalogServiceUnavailableError(
                 "Не удалось получить предмет из сервиса Catalog"
             ) from exc
