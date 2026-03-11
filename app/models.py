@@ -27,8 +27,8 @@ class Order(Base):
     user_id: Mapped[str] = mapped_column(String(255), nullable=False)
     item_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    idempotency_key: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), unique=True, nullable=False, index=True
+    idempotency_key: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=False
     )
     status: Mapped[OrderStatus] = mapped_column(
         Enum(OrderStatus, name="order_status"), nullable=False, default=OrderStatus.NEW

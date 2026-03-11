@@ -28,4 +28,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-print("database_url =", settings.get_db_string)

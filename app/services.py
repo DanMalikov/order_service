@@ -14,7 +14,7 @@ class OrderService:
         self.orders = OrderRepository(session)
 
     async def create_order(
-        self, user_id: str, item_id: UUID, quantity: int, idempotency_key: UUID
+        self, user_id: str, item_id: UUID, quantity: int, idempotency_key: str
     ):
         existing = await self.orders.get_by_idempotency_key(idempotency_key)
         if existing is not None:

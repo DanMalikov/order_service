@@ -14,14 +14,14 @@ class OrderRepository:
         result = await self.session.execute(select(Order).where(Order.id == order_id))
         return result.scalar_one_or_none()
 
-    async def get_by_idempotency_key(self, idempotency_key: UUID) -> Order | None:
+    async def get_by_idempotency_key(self, idempotency_key: str) -> Order | None:
         result = await self.session.execute(
             select(Order).where(Order.idempotency_key == idempotency_key)
         )
         return result.scalar_one_or_none()
 
     async def create(
-        self, user_id: str, item_id: UUID, quantity: int, idempotency_key: UUID
+        self, user_id: str, item_id: UUID, quantity: int, idempotency_key: str
     ) -> Order:
         order = Order(
             user_id=user_id,
