@@ -3,10 +3,10 @@ import psycopg
 from psycopg.rows import dict_row
 
 # Получаем строку подключения
-db_url = os.environ.get("DATABASE_URL")
+db_url = os.environ.get("POSTGRES_CONNECTION_STRING")
 
 if not db_url:
-    raise RuntimeError("DATABASE_URL not found in environment variables")
+    raise RuntimeError("POSTGRES_CONNECTION_STRING not found in environment variables")
 
 conn = psycopg.connect(db_url)
 cur = conn.cursor(row_factory=dict_row)
