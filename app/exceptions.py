@@ -12,3 +12,7 @@ class NotEnoughQtyError(Exception):
 
 class CatalogServiceUnavailableError(Exception):
     pass
+
+
+class PaymentServiceUnavailableError(Exception):
+    pass
