@@ -1,15 +1,15 @@
+import logging
 from datetime import datetime
+from uuid import UUID
 
 import httpx
-from uuid import UUID
+from pydantic import BaseModel
 
 from app.config import settings
 from app.exceptions import CatalogServiceUnavailableError, ItemNotFoundError
-from pydantic import BaseModel
-
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 class CatalogItemResponse(BaseModel):
     id: UUID
@@ -33,12 +33,16 @@ class CatalogClient:
             response = await self._client.get(url)
 
             logger.info(
-                "Запрос предмета из Catalog. item_id=%s status_code=%s response_text=%s", str(item_id), response.status_code, response.text)
+                "Запрос предмета из Catalog. item_id=%s status_code=%s response_text=%s",
+                str(item_id),
+                response.status_code,
+                response.text,
+            )
 
         except httpx.RequestError as exc:
-
             logger.exception(
-                "Запрос из Catalog сломался. item_id=%s url=%s", str(item_id), url)
+                "Запрос из Catalog сломался. item_id=%s url=%s", str(item_id), url
+            )
 
             raise CatalogServiceUnavailableError(
                 "Не удалось получить предмет из сервиса Catalog"
@@ -52,12 +56,7 @@ class CatalogClient:
         except httpx.HTTPStatusError as exc:
             raise CatalogServiceUnavailableError("Ошибка при работе с Catalog") from exc
 
-        try:
-            return CatalogItemResponse.model_validate(response.json())
-        except Exception as exc:
-            raise CatalogServiceUnavailableError(
-                "Данные из Catalog не прошли валидацию"
-            ) from exc
+        return CatalogItemResponse.model_validate(response.json())
 
 
 catalog_client = CatalogClient()

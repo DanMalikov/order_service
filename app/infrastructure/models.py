@@ -1,4 +1,3 @@
-import enum
 import uuid
 from datetime import datetime
 
@@ -6,16 +5,11 @@ from sqlalchemy import DateTime, Enum, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+from app.domain.models import OrderStatus
+
 
 class Base(DeclarativeBase):
     pass
-
-
-class OrderStatus(str, enum.Enum):
-    NEW = "NEW"
-    PAID = "PAID"
-    SHIPPED = "SHIPPED"
-    CANCELLED = "CANCELLED"
 
 
 class Order(Base):

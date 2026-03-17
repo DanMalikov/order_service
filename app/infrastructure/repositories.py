@@ -1,10 +1,11 @@
 from uuid import UUID
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.application.dto import CreateOrderDTO, OrderDTO
 from app.domain.models import OrderStatus
 from app.infrastructure.models import Order
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class OrderRepository:
@@ -17,7 +18,7 @@ class OrderRepository:
             item_id=new_order.item_id,
             quantity=new_order.quantity,
             idempotency_key=new_order.idempotency_key,
-            status=OrderStatus.NEW
+            status=OrderStatus.NEW,
         )
 
         self._session.add(order)
@@ -41,6 +42,17 @@ class OrderRepository:
             return None
         return self._convert_to_domain(order)
 
+    async def update_status(self, order_id: UUID, status: OrderStatus):
+        result = await self._session.execute(select(Order).where(Order.id == order_id))
+        order = result.scalar_one_or_none()
+        if order is None:
+            return None
+
+        order.status = status
+        await self._session.flush()
+        await self._session.refresh(order)
+        return self._convert_to_domain(order)
+
     @staticmethod
     def _convert_to_domain(model_orm: Order) -> OrderDTO:
         return OrderDTO(
@@ -50,5 +62,5 @@ class OrderRepository:
             item_id=model_orm.item_id,
             status=model_orm.status,
             created_at=model_orm.created_at,
-            updated_at=model_orm.updated_at
+            updated_at=model_orm.updated_at,
         )

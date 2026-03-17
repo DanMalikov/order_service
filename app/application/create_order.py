@@ -1,12 +1,16 @@
 import logging
+from decimal import Decimal
 
 from app.application.dto import CreateOrderDTO
-from app.exceptions import NotEnoughQtyError
+from app.config import settings
+from app.domain.models import OrderStatus
+from app.exceptions import NotEnoughQtyError, PaymentServiceUnavailableError
 from app.infrastructure.http_catalog_client import catalog_client
-from app.infrastructure.http_payment_client import payments_client
+from app.infrastructure.http_payment_client import CreatePaymentRequest, payments_client
 from app.infrastructure.uow import UnitOfWork
 
 logger = logging.getLogger(__name__)
+
 
 class CreateOrderUseCase:
     def __init__(self, unit_of_work: UnitOfWork):
@@ -16,10 +20,14 @@ class CreateOrderUseCase:
 
     async def __call__(self, new_order: CreateOrderDTO):
         async with self._unit_of_work() as uow:
+            check_idempotency_key = await uow.orders.get_idempotency_key(
+                idempotency_key=new_order.idempotency_key
+            )
 
-            check_idempotency_key = await uow.orders.get_idempotency_key(idempotency_key=new_order.idempotency_key)
-
-            logger.info("Результат проверки ключа идемпотентности check_idempotency_key=%s", check_idempotency_key)
+            logger.info(
+                "Результат проверки ключа идемпотентности check_idempotency_key=%s",
+                check_idempotency_key,
+            )
 
             if check_idempotency_key is not None:
                 return check_idempotency_key
@@ -27,16 +35,39 @@ class CreateOrderUseCase:
             item = await self._catalog_client.get_item(new_order.item_id)
 
             if item.available_qty < new_order.quantity:
-                logger.exception("Товара недостаточно для заказа. new_order.quantity=%s item.available_qty=%s", new_order.quantity, item.available_qty )
+                logger.exception(
+                    "Товара недостаточно для заказа. new_order.quantity=%s item.available_qty=%s",
+                    new_order.quantity,
+                    item.available_qty,
+                )
 
                 raise NotEnoughQtyError(
                     f"Недостаточно товара. Заказано - {new_order.quantity}, доступно - {item.available_qty}"
                 )
 
-            result = await uow.orders.create(new_order=new_order)
+            created_order = await uow.orders.create(new_order=new_order)
+
+            amount = Decimal(item.price) * Decimal(new_order.quantity)
+
+            try:
+                await self._payments_client.create_payment(
+                    CreatePaymentRequest(
+                        order_id=created_order.id,
+                        amount=amount,
+                        callback_url=settings.callback_url,
+                        idempotency_key=new_order.idempotency_key,
+                    )
+                )
+            except PaymentServiceUnavailableError:
+                cancelled_order = await uow.orders.update_status(
+                    order_id=created_order.id,
+                    status=OrderStatus.CANCELLED,
+                )
+                await uow.commit()
+                return cancelled_order
 
             await uow.commit()
 
             logger.info("Заказ успешно сформирован")
 
-            return result
+            return created_order

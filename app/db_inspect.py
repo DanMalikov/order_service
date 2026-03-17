@@ -1,4 +1,5 @@
 import os
+
 import psycopg
 from psycopg.rows import dict_row
 
@@ -25,12 +26,15 @@ tables = [row["table_name"] for row in cur.fetchall()]
 for table in tables:
     print(f"\nTable: {table}")
 
-    cur.execute("""
+    cur.execute(
+        """
     SELECT column_name, data_type
     FROM information_schema.columns
     WHERE table_name = %s
     ORDER BY ordinal_position
-    """, (table,))
+    """,
+        (table,),
+    )
 
     for column in cur.fetchall():
         print(f"  {column['column_name']} : {column['data_type']}")

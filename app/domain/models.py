@@ -28,4 +28,3 @@ class Item(BaseModel):
     price: str
     available_qty: int
     created_at: datetime
-

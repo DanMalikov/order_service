@@ -1,8 +1,9 @@
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.application.create_order import CreateOrderUseCase
 from app.application.get_order import GetOrderUseCase
+from app.application.payment_callback import ProcessPaymentCallbackUseCase
 from app.infrastructure.dependencies.db import session_factory
 from app.infrastructure.uow import UnitOfWork
 
@@ -27,3 +28,9 @@ def get_order_use_case(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ) -> GetOrderUseCase:
     return GetOrderUseCase(unit_of_work=uow)
+
+
+def get_process_payment_callback_use_case(
+    uow: UnitOfWork = Depends(get_unit_of_work),
+) -> ProcessPaymentCallbackUseCase:
+    return ProcessPaymentCallbackUseCase(unit_of_work=uow)

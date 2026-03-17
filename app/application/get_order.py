@@ -15,12 +15,11 @@ class GetOrderUseCase:
         async with self._unit_of_work() as uow:
             result = await uow.orders.get_order_id(order_id=order_id)
 
-            logger.info("Получен заказ result=%s", result)
-
             if result is None:
-
-                logger.exception("Заказ не найден")
+                logger.exception("Заказ order_id=%s не найден", order_id)
 
                 raise OrderNotFoundError(f"Заказ {order_id} не найден")
+
+            logger.info("Получен заказ order_id=%s", result.id)
 
             return result

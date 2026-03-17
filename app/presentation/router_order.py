@@ -1,30 +1,46 @@
-import logging
 from uuid import UUID
 
-from fastapi import APIRouter, status, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.application.create_order import CreateOrderUseCase
-from app.application.dto import CreateOrderDTO, OrderDTO
+from app.application.dto import CreateOrderDTO, OrderDTO, PaymentCallbackDTO
 from app.application.get_order import GetOrderUseCase
+from app.application.payment_callback import ProcessPaymentCallbackUseCase
+from app.exceptions import (
+    CatalogServiceUnavailableError,
+    ItemNotFoundError,
+    NotEnoughQtyError,
+    OrderNotFoundError,
+)
+from app.infrastructure.dependencies.depends import (
+    get_create_order_use_case,
+    get_order_use_case,
+    get_process_payment_callback_use_case,
+)
 
-from app.exceptions import ItemNotFoundError, NotEnoughQtyError, CatalogServiceUnavailableError, OrderNotFoundError
-from app.infrastructure.dependencies.depends import get_create_order_use_case, get_order_use_case
-logger = logging.getLogger(__name__)
 router_order = APIRouter(prefix="/api/orders", tags=["orders"])
+
 
 class CreateOrderRequest(CreateOrderDTO):
     pass
+
 
 class OrderResponse(OrderDTO):
     pass
 
 
-@router_order.post("", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+class PaymentCallbackRequest(PaymentCallbackDTO):
+    pass
+
+
+@router_order.post(
+    "", response_model=OrderResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_order(
     order: CreateOrderRequest,
     create_order_use_case: CreateOrderUseCase = Depends(get_create_order_use_case),
 ) -> OrderResponse:
-    logging.info("а тут уже не начало")
+
     try:
         result = await create_order_use_case(new_order=order)
     except ItemNotFoundError as exc:
@@ -44,7 +60,9 @@ async def create_order(
 
 
 @router_order.get("/{order_id}", response_model=OrderResponse)
-async def get_order(order_id: UUID, order_use_case: GetOrderUseCase = Depends(get_order_use_case)):
+async def get_order(
+    order_id: UUID, order_use_case: GetOrderUseCase = Depends(get_order_use_case)
+):
     try:
         result = await order_use_case(order_id)
     except OrderNotFoundError as exc:
@@ -52,3 +70,17 @@ async def get_order(order_id: UUID, order_use_case: GetOrderUseCase = Depends(ge
 
     return result
 
+
+@router_order.post("/payment-callback", status_code=status.HTTP_200_OK)
+async def payment_callback(
+    callback: PaymentCallbackRequest,
+    process_payment_callback_use_case: ProcessPaymentCallbackUseCase = Depends(
+        get_process_payment_callback_use_case
+    ),
+) -> Response:
+    try:
+        await process_payment_callback_use_case(callback=callback)
+    except OrderNotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    return Response(status_code=status.HTTP_200_OK)
