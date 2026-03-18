@@ -14,7 +14,7 @@ class ProcessPaymentCallbackUseCase:
 
     async def __call__(self, callback: PaymentCallbackDTO):
         async with self._unit_of_work() as uow:
-            logger.info("Получаем заказ order_id=%s", callback.order_id)
+            logger.info("Получаем из Paymant заказ order_id=%s", callback.order_id)
 
             order = await uow.orders.get_order_id(order_id=callback.order_id)
 
