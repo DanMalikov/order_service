@@ -71,6 +71,7 @@ async def get_order(
 
 
 @router_order.post("/payment-callback", status_code=status.HTTP_200_OK)
+@inject
 async def payment_callback(
     callback: PaymentCallbackRequest,
     process_payment_callback_use_case: PaymentCallbackUseCase = Depends(
