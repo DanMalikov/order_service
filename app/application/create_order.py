@@ -68,6 +68,6 @@ class CreateOrderUseCase:
 
             await uow.commit()
 
-            logger.info("Заказ успешно сформирован")
+            logger.info("Заказ order_id=%s успешно сформирован", created_order.id)
 
             return created_order
