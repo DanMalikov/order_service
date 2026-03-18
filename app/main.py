@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 
 from app.logger import configure_logging
