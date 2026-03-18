@@ -8,13 +8,14 @@ from app.infrastructure.uow import UnitOfWork
 logger = logging.getLogger(__name__)
 
 
-class ProcessPaymentCallbackUseCase:
+class PaymentCallbackUseCase:
+    """Use case для обработки запроса на callback от сервиса Payment"""
     def __init__(self, unit_of_work: UnitOfWork):
         self._unit_of_work = unit_of_work
 
     async def __call__(self, callback: PaymentCallbackDTO):
         async with self._unit_of_work() as uow:
-            logger.info("Получаем из Paymant заказ order_id=%s", callback.order_id)
+            logger.info("Получаем из Payment заказ order_id=%s", callback.order_id)
 
             order = await uow.orders.get_order_id(order_id=callback.order_id)
 
@@ -23,7 +24,7 @@ class ProcessPaymentCallbackUseCase:
 
             if order.status in (OrderStatus.PAID, OrderStatus.CANCELLED):
                 logger.info(
-                    "Заказ уже обработан order_id=%s status=%s", order.id, order.status
+                    "Заказ уже обработан сервисом Payment order_id=%s status=%s", order.id, order.status
                 )
                 return order
 

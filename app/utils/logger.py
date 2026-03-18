@@ -3,6 +3,7 @@ import sys
 
 
 def configure_logging(level: str = logging.INFO):
+    """Конфиг логов"""
     root_logger = logging.getLogger()
 
     if root_logger.handlers:

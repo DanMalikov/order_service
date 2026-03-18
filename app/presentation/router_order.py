@@ -1,21 +1,18 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from dependency_injector.wiring import Provide, inject
 
-from app.application.create_order import CreateOrderUseCase
+from app.application.create_order_use_case import CreateOrderUseCase
 from app.application.dto import CreateOrderDTO, OrderDTO, PaymentCallbackDTO
-from app.application.get_order import GetOrderUseCase
-from app.application.payment_callback import ProcessPaymentCallbackUseCase
+from app.application.get_order_use_case import GetOrderUseCase
+from app.application.payment_callback_use_case import PaymentCallbackUseCase
+from app.container import AppContainer
 from app.exceptions import (
     CatalogServiceUnavailableError,
     ItemNotFoundError,
     NotEnoughQtyError,
     OrderNotFoundError,
-)
-from app.infrastructure.dependencies.depends import (
-    get_create_order_use_case,
-    get_order_use_case,
-    get_process_payment_callback_use_case,
 )
 
 router_order = APIRouter(prefix="/api/orders", tags=["orders"])
@@ -36,9 +33,10 @@ class PaymentCallbackRequest(PaymentCallbackDTO):
 @router_order.post(
     "", response_model=OrderResponse, status_code=status.HTTP_201_CREATED
 )
+@inject
 async def create_order(
     order: CreateOrderRequest,
-    create_order_use_case: CreateOrderUseCase = Depends(get_create_order_use_case),
+    create_order_use_case: CreateOrderUseCase = Depends(Provide[AppContainer.application.create_order_use_case]),
 ) -> OrderResponse:
 
     try:
@@ -60,8 +58,9 @@ async def create_order(
 
 
 @router_order.get("/{order_id}", response_model=OrderResponse)
+@inject
 async def get_order(
-    order_id: UUID, order_use_case: GetOrderUseCase = Depends(get_order_use_case)
+    order_id: UUID, order_use_case: GetOrderUseCase = Depends(Provide[AppContainer.application.get_order_use_case])
 ):
     try:
         result = await order_use_case(order_id)
@@ -74,8 +73,8 @@ async def get_order(
 @router_order.post("/payment-callback", status_code=status.HTTP_200_OK)
 async def payment_callback(
     callback: PaymentCallbackRequest,
-    process_payment_callback_use_case: ProcessPaymentCallbackUseCase = Depends(
-        get_process_payment_callback_use_case
+    process_payment_callback_use_case: PaymentCallbackUseCase = Depends(
+        Provide[AppContainer.application.payment_callback_use_case]
     ),
 ) -> Response:
     try:

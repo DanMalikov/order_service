@@ -1,9 +1,12 @@
+"""скрипт для проверки тиблицы в кубе"""
 import os
 
 import psycopg
 from psycopg.rows import dict_row
 
-# Получаем строку подключения
+# kubectl exec -it <pod> \
+# -n <ns> \
+# -- python app/utils/db_inspect.py
 db_url = os.environ.get("POSTGRES_CONNECTION_STRING")
 
 if not db_url:
