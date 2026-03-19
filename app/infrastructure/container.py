@@ -15,10 +15,10 @@ class InfrastructureContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
 
     engine = providers.Singleton[AsyncEngine](
-        create_async_engine, config.get_db_string, echo=False, future=True
+        create_async_engine, config.get_db_string, echo=False, future=True, pool_pre_ping=True
     )
 
-    session_factory = providers.Factory(
+    session_factory = providers.Singleton(
         async_sessionmaker, bind=engine, class_=AsyncSession, expire_on_commit=False
     )
 
