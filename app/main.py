@@ -4,7 +4,6 @@ from app.presentation.router_order import router_order
 from app.utils.create_container import create_container
 from app.utils.logger import configure_logging
 
-
 configure_logging()
 
 app = FastAPI()

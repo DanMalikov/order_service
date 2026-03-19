@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 class CreateOrderUseCase:
     """Use case для обработки создания заказа и отправки заказа в сервис Payment"""
+
     def __init__(self, unit_of_work: UnitOfWork):
         self._unit_of_work = unit_of_work
         self._catalog_client = catalog_client

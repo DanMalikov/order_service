@@ -6,6 +6,7 @@ from app.infrastructure.container import InfrastructureContainer
 
 class AppContainer(containers.DeclarativeContainer):
     """Базовый контейнер"""
+
     config = providers.Configuration()
 
     infrastructure = providers.Container(

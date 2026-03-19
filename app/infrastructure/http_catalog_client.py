@@ -21,6 +21,7 @@ class CatalogItemResponse(BaseModel):
 
 class CatalogClient:
     """Клиент для отправки запроса в сервис Catalog"""
+
     def __init__(self) -> None:
         self._client = httpx.AsyncClient(
             base_url=settings.capashino_base_url,

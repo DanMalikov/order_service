@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 class PaymentCallbackUseCase:
     """Use case для обработки запроса на callback от сервиса Payment"""
+
     def __init__(self, unit_of_work: UnitOfWork):
         self._unit_of_work = unit_of_work
 
@@ -24,7 +25,9 @@ class PaymentCallbackUseCase:
 
             if order.status in (OrderStatus.PAID, OrderStatus.CANCELLED):
                 logger.info(
-                    "Заказ уже обработан сервисом Payment order_id=%s status=%s", order.id, order.status
+                    "Заказ уже обработан сервисом Payment order_id=%s status=%s",
+                    order.id,
+                    order.status,
                 )
                 return order
 
