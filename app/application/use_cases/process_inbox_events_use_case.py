@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProcessInboxEventsUseCase:
+    """"""
     def __init__(
         self,
         unit_of_work: UnitOfWork,
