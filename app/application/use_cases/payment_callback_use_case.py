@@ -1,7 +1,12 @@
 import logging
 
-from app.application.dto import PaymentCallbackDTO, PaymentCallbackStatus
-from app.domain.models import OrderStatus
+from app.application.dto import (
+    CreateOutboxEventDTO,
+    PaymentCallbackDTO,
+    PaymentCallbackStatus,
+)
+from app.config import settings
+from app.domain.models import OrderStatus, ShippingEventType
 from app.exceptions import OrderNotFoundError
 from app.infrastructure.uow import UnitOfWork
 
@@ -40,6 +45,21 @@ class PaymentCallbackUseCase:
                 order_id=callback.order_id,
                 status=new_status,
             )
+
+            if new_status == OrderStatus.PAID:
+                await uow.outbox.create(
+                    CreateOutboxEventDTO(
+                        topic=settings.kafka_order_events_topic,
+                        event_type=ShippingEventType.ORDER_PAID,
+                        payload={
+                            "event_type": ShippingEventType.ORDER_PAID.value,
+                            "order_id": str(updated_order.id),
+                            "item_id": str(updated_order.item_id),
+                            "quantity": updated_order.quantity,
+                            "idempotency_key": str(callback.payment_id),
+                        },
+                    )
+                )
 
             logger.info(
                 "Заказ order_id=%s теперь имеет статус status=%s",

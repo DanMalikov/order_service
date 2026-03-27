@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.infrastructure.kafka.kafka_consumer import KafkaConsumerService
+from app.infrastructure.kafka.kafka_producer import KafkaProducerService
 from app.infrastructure.uow import UnitOfWork
 
 
@@ -15,7 +17,11 @@ class InfrastructureContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
 
     engine = providers.Singleton[AsyncEngine](
-        create_async_engine, config.get_db_string, echo=False, future=True, pool_pre_ping=True
+        create_async_engine,
+        config.get_db_string,
+        echo=False,
+        future=True,
+        pool_pre_ping=True,
     )
 
     session_factory = providers.Singleton(
@@ -23,3 +29,16 @@ class InfrastructureContainer(containers.DeclarativeContainer):
     )
 
     unit_of_work = providers.Factory(UnitOfWork, session_factory)
+
+    kafka_producer = providers.Singleton(
+        KafkaProducerService,
+        bootstrap_servers=config.kafka_bootstrap_servers,
+    )
+
+    kafka_consumer = providers.Singleton(
+        KafkaConsumerService,
+        bootstrap_servers=config.kafka_bootstrap_servers,
+        topic=config.kafka_shipment_events_topic,
+        group_id=config.kafka_consumer_group_id,
+        unit_of_work=unit_of_work,
+    )

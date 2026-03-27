@@ -16,3 +16,11 @@ class CatalogServiceUnavailableError(Exception):
 
 class PaymentServiceUnavailableError(Exception):
     pass
+
+
+class DuplicateInboxEventError(Exception):
+    pass
+
+
+class InvalidShippingEventError(Exception):
+    pass

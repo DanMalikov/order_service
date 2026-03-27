@@ -5,8 +5,11 @@ from app.application.dto import CreateOrderDTO
 from app.config import settings
 from app.domain.models import OrderStatus
 from app.exceptions import NotEnoughQtyError, PaymentServiceUnavailableError
-from app.infrastructure.http_catalog_client import catalog_client
-from app.infrastructure.http_payment_client import CreatePaymentRequest, payments_client
+from app.infrastructure.http_clients.http_catalog_client import catalog_client
+from app.infrastructure.http_clients.http_payment_client import (
+    CreatePaymentRequest,
+    payments_client,
+)
 from app.infrastructure.uow import UnitOfWork
 
 logger = logging.getLogger(__name__)

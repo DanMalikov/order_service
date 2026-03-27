@@ -12,6 +12,13 @@ class Settings(BaseSettings):
     capashino_base_url: str
     api_key: str
     callback_url: str
+    kafka_bootstrap_servers: str
+    kafka_order_events_topic: str
+    kafka_shipment_events_topic: str
+    kafka_consumer_group_id: str
+    outbox_batch_size: int = 100
+    inbox_batch_size: int = 100
+    worker_poll_interval: float = 1.0
 
     @computed_field(return_type=str)
     @property
