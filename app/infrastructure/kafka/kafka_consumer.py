@@ -50,7 +50,7 @@ class KafkaConsumerService:
         await self.start()
         assert self._consumer is not None
         logger.info(
-            "Kafka consumer запущен topic=%s group_id=%s", self._topic, self._group_id
+            "Kafka consumer запущен topic=%s group_id=%s running=%s", self._topic, self._group_id, self._is_running
         )
 
         try:
