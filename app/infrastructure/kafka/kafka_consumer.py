@@ -62,6 +62,8 @@ class KafkaConsumerService:
                     await self._consumer.commit()
                     continue
 
+                logger.info("Consumer принял сообщение. payload = %s", payload)
+
                 try:
                     event = ShippingEventDTO.model_validate(payload)
 
@@ -74,6 +76,8 @@ class KafkaConsumerService:
                             )
                         )
                         await uow.commit()
+                        logger.info("Сообщение с заказом %s передано в Inbox", event.order_id)
+
 
                     await self._consumer.commit()
                 except DuplicateInboxEventError:

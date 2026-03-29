@@ -32,6 +32,7 @@ class ProcessInboxEventsUseCase:
                 limit=self._batch_size
             )
             if not events:
+                logger.info("events для Inbox не найдено. Уходим на ожидание")
                 return 0
 
             logger.info("Количество найденных events в Inbox = %s", len(events))
