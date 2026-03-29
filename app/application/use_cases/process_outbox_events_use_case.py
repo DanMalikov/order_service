@@ -52,7 +52,7 @@ class ProcessOutboxEventsUseCase:
 
                 await uow.outbox.mark_as_sent(event.id)
 
-                logger.info("Объект отправлен в kafka. order_id=%s", event.payload.order_id)
+                logger.info("Объект отправлен в kafka. order_id=%s", event.payload["order_id"])
                 processed += 1
 
             await uow.commit()
