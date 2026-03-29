@@ -36,7 +36,7 @@ async def lifespan(_: FastAPI):
         await kafka_producer.stop()
 
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 app.container = container
 app.include_router(router_order)
 

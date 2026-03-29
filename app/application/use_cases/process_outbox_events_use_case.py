@@ -8,12 +8,13 @@ logger = logging.getLogger(__name__)
 
 
 class ProcessOutboxEventsUseCase:
+    """Реализация паттерна Outbox"""
     def __init__(
         self,
         unit_of_work: UnitOfWork,
         kafka_producer: KafkaProducerService,
         batch_size: int = 100,
-        poll_interval: float = 1.0,
+        poll_interval: float = 5.0,
     ):
         self._unit_of_work = unit_of_work
         self._kafka_producer = kafka_producer
@@ -31,7 +32,10 @@ class ProcessOutboxEventsUseCase:
                 limit=self._batch_size
             )
             if not events:
+                logger.info("events для Outbox не найдено. Уходим на ожидание")
                 return 0
+
+            logger.info("Количество найденных events для Outbox = %s", len(events))
 
             for event in events:
                 await self._kafka_producer.publish(
@@ -40,6 +44,7 @@ class ProcessOutboxEventsUseCase:
                     key=str(event.id),
                 )
                 await uow.outbox.mark_as_sent(event.id)
+                logger.info("Объект отправлен в kafka. event_id=%s", event.id)
                 processed += 1
 
             await uow.commit()

@@ -60,6 +60,7 @@ class PaymentCallbackUseCase:
                         },
                     )
                 )
+                logger.info("Заказ сохранен в outbox")
 
             logger.info(
                 "Заказ order_id=%s теперь имеет статус status=%s",

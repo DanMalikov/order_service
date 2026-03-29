@@ -10,12 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 class ProcessInboxEventsUseCase:
-    """"""
+    """Реализация паттерна Inbox"""
     def __init__(
         self,
         unit_of_work: UnitOfWork,
         batch_size: int = 100,
-        poll_interval: float = 1.0,
+        poll_interval: float = 5.0,
     ):
         self._unit_of_work = unit_of_work
         self._batch_size = batch_size
@@ -34,6 +34,8 @@ class ProcessInboxEventsUseCase:
             if not events:
                 return 0
 
+            logger.info("Количество найденных events в Inbox = %s", len(events))
+
             for event in events:
                 order_id_raw = event.payload.get("order_id")
                 if order_id_raw is None:
@@ -42,6 +44,8 @@ class ProcessInboxEventsUseCase:
                 order = await uow.orders.get_order_id(UUID(str(order_id_raw)))
                 if order is None:
                     raise OrderNotFoundError(f"Заказ {order_id_raw} не найден")
+
+                logger.info("В Inbox найден объект с id = %s", order.id)
 
                 if event.event_type == ShippingEventType.ORDER_SHIPPED:
                     if order.status != OrderStatus.SHIPPED:
@@ -53,6 +57,8 @@ class ProcessInboxEventsUseCase:
                     raise InvalidShippingEventError(
                         f"Неподдерживаемый тип события {event.event_type}"
                     )
+
+                logger.info("Объект %s получил статус %s", order.id, order.status)
 
                 await uow.inbox.mark_as_processed(event.event_id)
                 processed += 1
@@ -69,5 +75,5 @@ class ProcessInboxEventsUseCase:
                 if processed == 0:
                     await asyncio.sleep(self._poll_interval)
             except Exception:
-                logger.exception("Inbox worker iteration failed")
+                logger.exception("Ошибка в цикле Inbox worker")
                 await asyncio.sleep(self._poll_interval)

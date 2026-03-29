@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     kafka_consumer_group_id: str
     outbox_batch_size: int = 100
     inbox_batch_size: int = 100
-    worker_poll_interval: float = 1.0
+    worker_poll_interval: float = 5.0
 
     @computed_field(return_type=str)
     @property

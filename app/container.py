@@ -17,4 +17,5 @@ class AppContainer(containers.DeclarativeContainer):
     application = providers.Container(
         ApplicationContainer,
         infrastructure=infrastructure,
+        config=config,
     )
