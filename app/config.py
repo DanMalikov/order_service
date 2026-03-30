@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     outbox_batch_size: int = 100
     inbox_batch_size: int = 100
     worker_poll_interval: float = 5.0
+    sentry_dsn: str
 
     @computed_field(return_type=str)
     @property
