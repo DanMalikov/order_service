@@ -24,3 +24,7 @@ class DuplicateInboxEventError(Exception):
 
 class InvalidShippingEventError(Exception):
     pass
+
+
+class NotificationsServiceUnavailableError(Exception):
+    pass

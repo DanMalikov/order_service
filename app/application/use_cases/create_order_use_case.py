@@ -2,6 +2,7 @@ import logging
 from decimal import Decimal
 
 from app.application.dto import CreateOrderDTO
+from app.application.use_cases.send_notification_use_case import SendNotificationUseCase
 from app.config import settings
 from app.domain.models import OrderStatus
 from app.exceptions import NotEnoughQtyError, PaymentServiceUnavailableError
@@ -18,10 +19,11 @@ logger = logging.getLogger(__name__)
 class CreateOrderUseCase:
     """Use case для обработки создания заказа и отправки заказа в сервис Payment"""
 
-    def __init__(self, unit_of_work: UnitOfWork):
+    def __init__(self, unit_of_work: UnitOfWork, send_notification_use_case: SendNotificationUseCase):
         self._unit_of_work = unit_of_work
         self._catalog_client = catalog_client
         self._payments_client = payments_client
+        self._send_notification_use_case = send_notification_use_case
 
     async def __call__(self, new_order: CreateOrderDTO):
         async with self._unit_of_work() as uow:
@@ -69,9 +71,21 @@ class CreateOrderUseCase:
                     status=OrderStatus.CANCELLED,
                 )
                 await uow.commit()
+                self._send_notification_use_case.dispatch(
+                    event_payload={
+                        "order_id": str(cancelled_order.id),
+                        "reason": "Не удалось создать платеж",
+                    },
+                    event_type="order.cancelled",
+                )
                 return cancelled_order
 
             await uow.commit()
+
+            self._send_notification_use_case.dispatch(
+                event_payload={"order_id": str(created_order.id)},
+                event_type="order.new",
+            )
 
             logger.info("Заказ order_id=%s успешно сформирован", created_order.id)
 

@@ -5,6 +5,7 @@ from app.application.dto import (
     PaymentCallbackDTO,
     PaymentCallbackStatus,
 )
+from app.application.use_cases.send_notification_use_case import SendNotificationUseCase
 from app.config import settings
 from app.domain.models import OrderStatus, ShippingEventType
 from app.exceptions import OrderNotFoundError
@@ -16,8 +17,9 @@ logger = logging.getLogger(__name__)
 class PaymentCallbackUseCase:
     """Use case для обработки запроса на callback от сервиса Payment"""
 
-    def __init__(self, unit_of_work: UnitOfWork):
+    def __init__(self, unit_of_work: UnitOfWork, send_notification_use_case: SendNotificationUseCase):
         self._unit_of_work = unit_of_work
+        self._send_notification_use_case = send_notification_use_case
 
     async def __call__(self, callback: PaymentCallbackDTO):
         async with self._unit_of_work() as uow:
@@ -69,4 +71,13 @@ class PaymentCallbackUseCase:
             )
 
             await uow.commit()
+
+            self._send_notification_use_case.dispatch(
+                event_payload={
+                    "order_id": str(updated_order.id),
+                    "reason": callback.error_message,
+                },
+                event_type="order.paid" if new_status == OrderStatus.PAID else "order.cancelled",
+            )
+
             return updated_order

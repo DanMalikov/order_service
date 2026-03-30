@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 from app.infrastructure.kafka.kafka_consumer import KafkaConsumerService
 from app.infrastructure.kafka.kafka_producer import KafkaProducerService
 from app.infrastructure.uow import UnitOfWork
-
+from app.infrastructure.http_clients.http_notifications_client import notifications_client
 
 class InfrastructureContainer(containers.DeclarativeContainer):
     """Контейнер с зависимостями из infrastructure"""
@@ -42,3 +42,5 @@ class InfrastructureContainer(containers.DeclarativeContainer):
         group_id=config.kafka_consumer_group_id,
         unit_of_work=unit_of_work,
     )
+
+    notifications_client = providers.Object(notifications_client)
