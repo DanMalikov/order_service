@@ -1,27 +1,27 @@
-import enum
 from datetime import datetime
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel
 
 
-class ShippingEventType(str, enum.Enum):
+class ShippingEventType(StrEnum):
     ORDER_PAID = "order.paid"
     ORDER_SHIPPED = "order.shipped"
     ORDER_CANCELLED = "order.cancelled"
 
 
-class OutboxEventStatus(str, enum.Enum):
+class OutboxEventStatus(StrEnum):
     PENDING = "PENDING"
     SENT = "SENT"
 
 
-class InboxEventStatus(str, enum.Enum):
+class InboxEventStatus(StrEnum):
     PENDING = "PENDING"
     PROCESSED = "PROCESSED"
 
 
-class OrderStatus(str, enum.Enum):
+class OrderStatus(StrEnum):
     NEW = "NEW"
     PAID = "PAID"
     SHIPPED = "SHIPPED"
