@@ -3,6 +3,12 @@ from uuid import UUID
 
 import httpx
 from pydantic import BaseModel
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 from app.config import settings
 from app.exceptions import NotificationsServiceUnavailableError
@@ -33,6 +39,12 @@ class NotificationsClient:
             timeout=10.0,
         )
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_fixed(0.5),
+        retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError)),
+        reraise=True,
+    )
     async def send_notification(
         self, notification: CreateNotificationRequest
     ) -> NotificationResponse:
@@ -47,10 +59,11 @@ class NotificationsClient:
 
         try:
             response = await self._client.post(url, json=payload)
-        except httpx.RequestError as exc:
+        except (httpx.RequestError, httpx.HTTPStatusError) as exc:
             logger.exception(
                 "Запрос в Notifications сломался reference_id=%s",
                 notification.reference_id,
+                exc_info=True,
             )
             raise NotificationsServiceUnavailableError(
                 "Не удалось отправить уведомление в сервис Notifications"

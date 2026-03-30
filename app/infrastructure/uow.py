@@ -2,7 +2,11 @@ from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.infrastructure.repositories import OrderRepository, OutboxRepository, InboxRepository
+from app.infrastructure.repositories import (
+    InboxRepository,
+    OrderRepository,
+    OutboxRepository,
+)
 
 
 class UnitOfWork:

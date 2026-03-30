@@ -4,7 +4,6 @@ from uuid import UUID
 
 from app.application.use_cases.send_notification_use_case import SendNotificationUseCase
 from app.domain.models import OrderStatus, ShippingEventType
-from app.exceptions import InvalidShippingEventError
 from app.infrastructure.uow import UnitOfWork
 
 logger = logging.getLogger(__name__)
@@ -12,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 class ProcessInboxEventsUseCase:
     """Реализация паттерна Inbox"""
+
     def __init__(
         self,
         unit_of_work: UnitOfWork,
@@ -44,14 +44,20 @@ class ProcessInboxEventsUseCase:
             for event in events:
                 order_id_raw = event.payload.get("order_id")
                 if order_id_raw is None:
-                    logger.warning("В событии нет order_id, event_id=%s", event.event_id)
+                    logger.warning(
+                        "В событии нет order_id, event_id=%s", event.event_id
+                    )
                     await uow.inbox.mark_as_processed(event.event_id)
                     processed += 1
                     continue
 
                 order = await uow.orders.get_order_id(UUID(str(order_id_raw)))
                 if order is None:
-                    logger.warning("Заказ %s не найден, пропускаем event_id=%s", order_id_raw, event.event_id)
+                    logger.warning(
+                        "Заказ %s не найден, пропускаем event_id=%s",
+                        order_id_raw,
+                        event.event_id,
+                    )
                     await uow.inbox.mark_as_processed(event.event_id)
                     processed += 1
                     continue
@@ -61,10 +67,12 @@ class ProcessInboxEventsUseCase:
                 if event.event_type == ShippingEventType.ORDER_SHIPPED:
                     if order.status != OrderStatus.SHIPPED:
                         await uow.orders.update_status(order.id, OrderStatus.SHIPPED)
-                        notifications_to_send.append((
-                            {"order_id": str(order.id)},
-                            "order.shipped",
-                        ))
+                        notifications_to_send.append(
+                            (
+                                {"order_id": str(order.id)},
+                                "order.shipped",
+                            )
+                        )
                         logger.info(
                             "Объект %s получил статус %s",
                             order.id,
@@ -74,18 +82,23 @@ class ProcessInboxEventsUseCase:
                     if order.status != OrderStatus.CANCELLED:
                         cancel_reason = event.payload.get("reason")
                         await uow.orders.update_status(order.id, OrderStatus.CANCELLED)
-                        notifications_to_send.append((
-                            {"order_id": str(order.id), "reason": cancel_reason},
-                            "order.cancelled",
-                        ))
+                        notifications_to_send.append(
+                            (
+                                {"order_id": str(order.id), "reason": cancel_reason},
+                                "order.cancelled",
+                            )
+                        )
                         logger.info(
                             "Объект %s получил статус %s",
                             order.id,
                             OrderStatus.CANCELLED,
                         )
                 else:
-                    logger.warning("Неподдерживаемый тип события %s, event_id=%s", event.event_type, event.event_id)
-
+                    logger.warning(
+                        "Неподдерживаемый тип события %s, event_id=%s",
+                        event.event_type,
+                        event.event_id,
+                    )
 
                 await uow.inbox.mark_as_processed(event.event_id)
                 processed += 1

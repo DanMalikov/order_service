@@ -50,7 +50,10 @@ class KafkaConsumerService:
         await self.start()
         assert self._consumer is not None
         logger.info(
-            "Kafka consumer запущен topic=%s group_id=%s running=%s", self._topic, self._group_id, self._is_running
+            "Kafka consumer запущен topic=%s group_id=%s running=%s",
+            self._topic,
+            self._group_id,
+            self._is_running,
         )
 
         try:
@@ -76,8 +79,9 @@ class KafkaConsumerService:
                             )
                         )
                         await uow.commit()
-                        logger.info("Сообщение с заказом %s передано в Inbox", event.order_id)
-
+                        logger.info(
+                            "Сообщение с заказом %s передано в Inbox", event.order_id
+                        )
 
                     await self._consumer.commit()
                 except DuplicateInboxEventError:

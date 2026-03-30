@@ -3,8 +3,12 @@ from dependency_injector import containers, providers
 from app.application.use_cases.create_order_use_case import CreateOrderUseCase
 from app.application.use_cases.get_order_use_case import GetOrderUseCase
 from app.application.use_cases.payment_callback_use_case import PaymentCallbackUseCase
-from app.application.use_cases.process_inbox_events_use_case import ProcessInboxEventsUseCase
-from app.application.use_cases.process_outbox_events_use_case import ProcessOutboxEventsUseCase
+from app.application.use_cases.process_inbox_events_use_case import (
+    ProcessInboxEventsUseCase,
+)
+from app.application.use_cases.process_outbox_events_use_case import (
+    ProcessOutboxEventsUseCase,
+)
 from app.application.use_cases.send_notification_use_case import SendNotificationUseCase
 
 

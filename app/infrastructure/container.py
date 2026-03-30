@@ -6,10 +6,13 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.infrastructure.http_clients.http_notifications_client import (
+    notifications_client,
+)
 from app.infrastructure.kafka.kafka_consumer import KafkaConsumerService
 from app.infrastructure.kafka.kafka_producer import KafkaProducerService
 from app.infrastructure.uow import UnitOfWork
-from app.infrastructure.http_clients.http_notifications_client import notifications_client
+
 
 class InfrastructureContainer(containers.DeclarativeContainer):
     """Контейнер с зависимостями из infrastructure"""

@@ -64,4 +64,6 @@ class SendNotificationUseCase:
 
     def dispatch(self, event_payload: dict, event_type: str) -> asyncio.Task:
         """Создание отдельной задачи, чтобы не блокировать обработку заказа"""
-        return asyncio.create_task(self.execute(event_payload=event_payload, event_type=event_type))
+        return asyncio.create_task(
+            self.execute(event_payload=event_payload, event_type=event_type)
+        )
