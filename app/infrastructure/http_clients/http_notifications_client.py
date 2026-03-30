@@ -2,6 +2,7 @@ import logging
 from uuid import UUID
 
 import httpx
+import sentry_sdk
 from pydantic import BaseModel
 from tenacity import (
     retry,
@@ -72,7 +73,8 @@ class NotificationsClient:
 
         try:
             response.raise_for_status()
-        except httpx.HTTPStatusError:
+        except httpx.HTTPStatusError as exc:
+            sentry_sdk.capture_exception(exc)
             logger.exception(
                 "Notifications вернул ошибку reference_id=%s status_code=%s",
                 notification.reference_id,
