@@ -27,6 +27,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
         CreateOrderUseCase,
         unit_of_work=infrastructure.unit_of_work,
         send_notification_use_case=send_notification_use_case,
+        catalog_client=infrastructure.catalog_client,
+        payments_client=infrastructure.payments_client,
+        callback_url=config.callback_url,
     )
 
     get_order_use_case = providers.Factory(

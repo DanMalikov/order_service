@@ -6,9 +6,11 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.infrastructure.http_clients.http_catalog_client import CatalogClient
 from app.infrastructure.http_clients.http_notifications_client import (
-    notifications_client,
+    NotificationsClient,
 )
+from app.infrastructure.http_clients.http_payment_client import PaymentsClient
 from app.infrastructure.kafka.kafka_consumer import KafkaConsumerService
 from app.infrastructure.kafka.kafka_producer import KafkaProducerService
 from app.infrastructure.uow import UnitOfWork
@@ -33,6 +35,24 @@ class InfrastructureContainer(containers.DeclarativeContainer):
 
     unit_of_work = providers.Factory(UnitOfWork, session_factory)
 
+    catalog_client = providers.Singleton(
+        CatalogClient,
+        base_url=config.capashino_base_url,
+        api_key=config.api_key,
+    )
+
+    payments_client = providers.Singleton(
+        PaymentsClient,
+        base_url=config.capashino_base_url,
+        api_key=config.api_key,
+    )
+
+    notifications_client = providers.Singleton(
+        NotificationsClient,
+        base_url=config.capashino_base_url,
+        api_key=config.api_key,
+    )
+
     kafka_producer = providers.Singleton(
         KafkaProducerService,
         bootstrap_servers=config.kafka_bootstrap_servers,
@@ -45,5 +65,3 @@ class InfrastructureContainer(containers.DeclarativeContainer):
         group_id=config.kafka_consumer_group_id,
         unit_of_work=unit_of_work,
     )
-
-    notifications_client = providers.Object(notifications_client)

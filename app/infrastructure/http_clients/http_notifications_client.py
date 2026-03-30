@@ -10,8 +10,6 @@ from tenacity import (
     wait_exponential,
 )
 
-from app.config import settings
-
 logger = logging.getLogger(__name__)
 
 
@@ -31,11 +29,11 @@ class NotificationResponse(BaseModel):
 class NotificationsClient:
     """Клиент для отправки уведомлений в Notifications Service."""
 
-    def __init__(self) -> None:
+    def __init__(self, base_url: str, api_key: str, timeout: float = 10.0) -> None:
         self._client = httpx.AsyncClient(
-            base_url=settings.capashino_base_url,
-            headers={"X-API-Key": settings.api_key},
-            timeout=10.0,
+            base_url=base_url,
+            headers={"X-API-Key": api_key},
+            timeout=timeout,
         )
 
     @retry(
@@ -83,6 +81,3 @@ class NotificationsClient:
             raise
 
         return NotificationResponse.model_validate(response.json())
-
-
-notifications_client = NotificationsClient()

@@ -3,13 +3,12 @@ from decimal import Decimal
 
 from app.application.dto import CreateOrderDTO
 from app.application.use_cases.send_notification_use_case import SendNotificationUseCase
-from app.config import settings
 from app.domain.models import OrderStatus
 from app.exceptions import NotEnoughQtyError, PaymentServiceUnavailableError
-from app.infrastructure.http_clients.http_catalog_client import catalog_client
+from app.infrastructure.http_clients.http_catalog_client import CatalogClient
 from app.infrastructure.http_clients.http_payment_client import (
     CreatePaymentRequest,
-    payments_client,
+    PaymentsClient,
 )
 from app.infrastructure.uow import UnitOfWork
 
@@ -23,11 +22,15 @@ class CreateOrderUseCase:
         self,
         unit_of_work: UnitOfWork,
         send_notification_use_case: SendNotificationUseCase,
+        catalog_client: CatalogClient,
+        payments_client: PaymentsClient,
+        callback_url: str,
     ):
         self._unit_of_work = unit_of_work
         self._catalog_client = catalog_client
         self._payments_client = payments_client
         self._send_notification_use_case = send_notification_use_case
+        self._callback_url = callback_url
 
     async def __call__(self, new_order: CreateOrderDTO):
         async with self._unit_of_work() as uow:
@@ -65,7 +68,7 @@ class CreateOrderUseCase:
                     CreatePaymentRequest(
                         order_id=created_order.id,
                         amount=amount,
-                        callback_url=settings.callback_url,
+                        callback_url=self._callback_url,
                         idempotency_key=new_order.idempotency_key,
                     )
                 )
