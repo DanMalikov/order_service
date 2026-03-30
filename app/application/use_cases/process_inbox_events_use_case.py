@@ -3,7 +3,7 @@ import logging
 from uuid import UUID
 
 from app.domain.models import OrderStatus, ShippingEventType
-from app.exceptions import InvalidShippingEventError, OrderNotFoundError
+from app.exceptions import InvalidShippingEventError
 from app.infrastructure.uow import UnitOfWork
 
 logger = logging.getLogger(__name__)
@@ -40,29 +40,35 @@ class ProcessInboxEventsUseCase:
             for event in events:
                 order_id_raw = event.payload.get("order_id")
                 if order_id_raw is None:
-                    raise InvalidShippingEventError("В событии нет order_id")
+                    logger.warning("В событии нет order_id, event_id=%s", event.event_id)
+                    await uow.inbox.mark_as_processed(event.event_id)
+                    processed += 1
+                    continue
 
                 order = await uow.orders.get_order_id(UUID(str(order_id_raw)))
                 if order is None:
-                    raise OrderNotFoundError(f"Заказ {order_id_raw} не найден")
+                    logger.warning("Заказ %s не найден, пропускаем event_id=%s", order_id_raw, event.event_id)
+                    await uow.inbox.mark_as_processed(event.event_id)
+                    processed += 1
+                    continue
 
                 logger.info("В Inbox найден объект с id = %s", order.id)
 
                 if event.event_type == ShippingEventType.ORDER_SHIPPED:
                     if order.status != OrderStatus.SHIPPED:
                         await uow.orders.update_status(order.id, OrderStatus.SHIPPED)
+                        logger.info("Объект %s получил статус %s", order.id,  OrderStatus.SHIPPED)
                 elif event.event_type == ShippingEventType.ORDER_CANCELLED:
                     if order.status != OrderStatus.CANCELLED:
                         await uow.orders.update_status(order.id, OrderStatus.CANCELLED)
+                        logger.info("Объект %s получил статус %s", order.id, OrderStatus.CANCELLED)
                 else:
-                    raise InvalidShippingEventError(
-                        f"Неподдерживаемый тип события {event.event_type}"
-                    )
+                    logger.warning("Неподдерживаемый тип события %s, event_id=%s", event.event_type, event.event_id)
 
-                logger.info("Объект %s получил статус %s", order.id, order.status)
 
                 await uow.inbox.mark_as_processed(event.event_id)
                 processed += 1
+
 
             await uow.commit()
         return processed
