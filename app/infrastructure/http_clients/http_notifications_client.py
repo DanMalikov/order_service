@@ -39,8 +39,8 @@ class NotificationsClient:
         )
 
     @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=0.5, min=0.5, max=3),
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=1, min=1, max=5),
         retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError)),
         reraise=True,
     )
