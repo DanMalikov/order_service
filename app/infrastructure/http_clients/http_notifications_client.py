@@ -7,11 +7,10 @@ from tenacity import (
     retry,
     retry_if_exception_type,
     stop_after_attempt,
-    wait_fixed,
+    wait_exponential,
 )
 
 from app.config import settings
-from app.exceptions import NotificationsServiceUnavailableError
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class NotificationsClient:
 
     @retry(
         stop=stop_after_attempt(3),
-        wait=wait_fixed(0.5),
+        wait=wait_exponential(multiplier=0.5, min=0.5, max=3),
         retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError)),
         reraise=True,
     )
@@ -59,15 +58,12 @@ class NotificationsClient:
 
         try:
             response = await self._client.post(url, json=payload)
-        except (httpx.RequestError, httpx.HTTPStatusError) as exc:
+        except httpx.RequestError:
             logger.exception(
-                "Запрос в Notifications сломался reference_id=%s",
+                "Сетевая ошибка при запросе в Notifications reference_id=%s",
                 notification.reference_id,
-                exc_info=True,
             )
-            raise NotificationsServiceUnavailableError(
-                "Не удалось отправить уведомление в сервис Notifications"
-            ) from exc
+            raise
 
         logger.info(
             "Ответ от Notifications reference_id=%s status_code=%s response_text=%s",
@@ -78,10 +74,13 @@ class NotificationsClient:
 
         try:
             response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            raise NotificationsServiceUnavailableError(
-                "Ошибка при работе с Notifications"
-            ) from exc
+        except httpx.HTTPStatusError:
+            logger.exception(
+                "Notifications вернул ошибку reference_id=%s status_code=%s",
+                notification.reference_id,
+                response.status_code,
+            )
+            raise
 
         return NotificationResponse.model_validate(response.json())
 
