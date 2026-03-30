@@ -4,9 +4,14 @@ from uuid import UUID
 
 import httpx
 from pydantic import BaseModel
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from app.config import settings
-from app.exceptions import PaymentServiceUnavailableError
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +42,12 @@ class PaymentsClient:
             timeout=10.0,
         )
 
+    @retry(
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=1, min=1, max=5),
+        retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError)),
+        reraise=True,
+    )
     async def create_payment(self, payment: CreatePaymentRequest) -> PaymentResponse:
         url = "/api/payments"
         payload = payment.model_dump(mode="json")
@@ -50,15 +61,13 @@ class PaymentsClient:
 
         try:
             response = await self._client.post(url, json=payload)
-        except httpx.RequestError as exc:
+        except httpx.RequestError:
             logger.exception(
-                "Запрос в Payments сломался order_id=%s idempotency_key=%s",
+                "Не удалось сделать запрос в Payments. order_id=%s idempotency_key=%s",
                 str(payment.order_id),
                 payment.idempotency_key,
             )
-            raise PaymentServiceUnavailableError(
-                "Не удалось создать платеж в сервисе Payments"
-            ) from exc
+            raise
 
         logger.info(
             "Ответ от Payments order_id=%s status_code=%s response_text=%s",
@@ -69,10 +78,9 @@ class PaymentsClient:
 
         try:
             response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            raise PaymentServiceUnavailableError(
-                "Ошибка при работе с Payments"
-            ) from exc
+        except httpx.HTTPStatusError:
+            logger.exception("Ошибка при работе с Payments")
+            raise
 
         return PaymentResponse.model_validate(response.json())
 
